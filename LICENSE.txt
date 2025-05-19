@@ -1,0 +1,13 @@
+MIT License (Adaptée)
+
+Copyright (c) [année] [Ton Nom]
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to use
+the Software for personal and non-commercial purposes only, subject to the following conditions:
+
+- The Software shall not be sold, sublicensed, or redistributed for commercial gain.
+- Modifications are permitted, but must retain this license and copyright.
+- The above copyright notice and this permission notice shall be included in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.

@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+
+# Environnements virtuels
+venv/
+env/
+.venv/
+.env/
+
+# Pytest / coverage
+.coverage
+.tox/
+nosetests.xml
+test-results/
+
+# Fichiers système
+.DS_Store
+Thumbs.db
+
+# Flask specific
+instance/
+*.db
+*.sqlite3
+
+# Uploads / backups
+uploads/
+backup.zip
+
+# VS Code / IDE
+.vscode/
+.idea/
+
+# Compilé ou temporaire
+*.log
+*.bak
+*.swp

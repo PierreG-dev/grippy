@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="fr" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@heroicons/vue@2.0.13/24/solid/index.min.js"></script>
+  </head>
+  <body class="bg-gray-900 text-white min-h-screen relative">
+    <div class="max-w-4xl mx-auto p-6">
+      <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold">📁 Dashboard – Fichiers uploadés</h1>
+        <a
+          href="/logout"
+          class="text-blue-400 hover:underline flex items-center gap-1"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-5 w-5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1m0-10v1"
+            />
+          </svg>
+          Déconnexion
+        </a>
+      </div>
+
+      <div class="mb-4 flex gap-4">
+        <button
+          id="openUpload"
+          class="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+        >
+          <img src="/static/icons/upload.png" alt="upload" class="w-5 h-5" />
+          Uploader
+        </button>
+
+        <button
+          id="downloadZip"
+          class="flex items-center gap-2 bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-5 w-5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M4 4v16h16V4H4zm8 4v8m0 0l-3-3m3 3l3-3"
+            />
+          </svg>
+          Télécharger tout
+        </button>
+      </div>
+
+      <table class="w-full bg-gray-800 rounded shadow overflow-hidden">
+        <thead class="bg-gray-700 text-left">
+          <tr>
+            <th class="p-3"></th>
+            <th class="p-3 cursor-pointer" onclick="sortTable(1, 'text')">
+              <div class="flex items-center gap-1">
+                Nom <span id="sort-indicator-1"></span>
+              </div>
+            </th>
+            <th class="p-3 cursor-pointer" onclick="sortTable(2, 'number')">
+              <div class="flex items-center gap-1">
+                Taille <span id="sort-indicator-2"></span>
+              </div>
+            </th>
+            <th class="p-3 cursor-pointer" onclick="sortTable(3, 'text')">
+              <div class="flex items-center gap-1">
+                Type <span id="sort-indicator-3"></span>
+              </div>
+            </th>
+            <th class="p-3 cursor-pointer" onclick="sortTable(4, 'date')">
+              <div class="flex items-center gap-1">
+                Uploadé <span id="sort-indicator-4"></span>
+              </div>
+            </th>
+            <th class="p-3">Actions</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {% for f in files %}
+          <tr
+            class="{% if loop.index is even %}bg-gray-700{% else %}bg-gray-800{% endif %} border-t border-gray-600"
+          >
+            <td class="p-3 w-10">
+              <img
+                src="{{ f.icon }}"
+                alt="icon"
+                class="w-6 h-6"
+                style="object-fit: cover"
+              />
+            </td>
+            <td class="p-3">{{ f.name }}</td>
+            <td class="p-3">{{ (f.size / 1024)|round(1) }} Ko</td>
+            <td class="p-3">{{ f.type }}</td>
+            <td class="p-3" data-timestamp="{{ f.timestamp }}">
+              {{ f.uploaded }}
+            </td>
+            <td class="p-3 flex gap-2 flex-wrap">
+              <button
+                onclick="copyLink(window.location.origin + '{{ f.url }}')"
+                class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm"
+              >
+                📋 Copier lien
+              </button>
+              <button
+                onclick="deleteFile('{{ f.name }}')"
+                class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm"
+              >
+                🗑 Supprimer
+              </button>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Modale Upload -->
+    <div
+      id="uploadModal"
+      class="fixed inset-0 bg-black bg-opacity-60 hidden flex items-center justify-center z-50"
+    >
+      <div class="bg-gray-800 text-white p-6 rounded shadow-md w-full max-w-sm">
+        <h2 class="text-lg font-semibold mb-4">Uploader un fichier</h2>
+        <div
+          id="dropZone"
+          class="w-full h-40 mb-4 border-4 border-dashed border-gray-600 rounded flex items-center justify-center text-gray-400 cursor-pointer text-center"
+        >
+          Déposez un fichier ici ou cliquez pour choisir
+        </div>
+        <input type="file" id="fileInput" class="hidden" />
+        <div class="flex justify-end gap-2">
+          <button
+            id="cancelUpload"
+            class="px-4 py-2 rounded bg-gray-600 hover:bg-gray-700"
+          >
+            Annuler
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast -->
+    <div
+      id="toast"
+      class="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-gray-700 text-white px-4 py-2 rounded shadow-lg hidden z-50"
+    ></div>
+
+    <script>
+                              const token = {{ api_token | tojson | safe }};
+
+                              const showToast = (message) => {
+                                const toast = document.getElementById('toast');
+                                toast.textContent = message;
+                                toast.classList.remove('hidden');
+                                setTimeout(() => toast.classList.add('hidden'), 3000);
+                              };
+
+                              const toggleModal = () => {
+                                document.getElementById('uploadModal').classList.toggle('hidden');
+                              };
+
+                              const deleteFile = (name) => {
+                                const encoded = encodeURIComponent(name);
+                                fetch(`/api/delete/${encoded}`, {
+                                  method: 'DELETE',
+                                  headers: { Authorization: 'Bearer ' + token }
+                                })
+                                  .then(res => res.json())
+                                  .then(() => {
+                                    showToast('Fichier supprimé');
+                                    setTimeout(() => location.reload(), 1000);
+                                  });
+                              };
+
+                              const copyLink = (url) => {
+                          navigator.clipboard.writeText(url)
+                            .then(() => showToast('Lien copié !'))
+                            .catch(() => showToast('Erreur lors de la copie'));
+                        };
+
+
+                              const uploadFile = (file) => {
+                                const formData = new FormData();
+                                formData.append('file', file);
+
+                                fetch('/api/upload', {
+                                  method: 'POST',
+                                  headers: { Authorization: 'Bearer ' + token },
+                                  body: formData
+                                })
+                                  .then(res => res.json())
+                                  .then(res => {
+                                    if (res.url) {
+                                      showToast('Fichier envoyé');
+                                      toggleModal();
+                                      setTimeout(() => location.reload(), 1000);
+                                    }
+                                  });
+                              };
+
+                              const downloadZip = () => {
+                                fetch('/api/backup', {
+                                  method: 'GET',
+                                  headers: { Authorization: 'Bearer ' + token }
+                                })
+                                  .then(res => res.blob())
+                                  .then(blob => {
+                                    const link = document.createElement('a');
+                                    link.href = window.URL.createObjectURL(blob);
+                                    link.download = 'backup.zip';
+                                    link.click();
+                                  });
+                              };
+
+                              const dropZone = document.getElementById('dropZone');
+                              const fileInput = document.getElementById('fileInput');
+
+                              dropZone.addEventListener('click', () => fileInput.click());
+
+                              dropZone.addEventListener('dragover', (e) => {
+                                e.preventDefault();
+                                dropZone.classList.add('border-blue-400');
+                              });
+
+                              dropZone.addEventListener('dragleave', () => {
+                                dropZone.classList.remove('border-blue-400');
+                              });
+
+                              dropZone.addEventListener('drop', (e) => {
+                                e.preventDefault();
+                                dropZone.classList.remove('border-blue-400');
+                                const files = e.dataTransfer.files;
+                                if (files.length > 0) uploadFile(files[0]);
+                              });
+
+                              fileInput.addEventListener('change', () => {
+                                if (fileInput.files.length > 0) uploadFile(fileInput.files[0]);
+                              });
+
+                              document.getElementById('openUpload').onclick = toggleModal;
+                              document.getElementById('cancelUpload').onclick = toggleModal;
+                              document.getElementById('downloadZip').onclick = downloadZip;
+
+                             // Tri dynamique avec flèches ▲▼
+      let currentSort = { col: null, dir: 1 };
+
+      function sortTable(colIndex, type) {
+        const table = document.querySelector("table tbody");
+        const rows = Array.from(table.rows);
+
+        rows.sort((a, b) => {
+          let aVal, bVal;
+
+          if (type === 'number') {
+            aVal = parseFloat(a.cells[colIndex].innerText.replace(',', '.')) || 0;
+            bVal = parseFloat(b.cells[colIndex].innerText.replace(',', '.')) || 0;
+          } else if (type === 'date') {
+            aVal = parseFloat(a.cells[colIndex].getAttribute('data-timestamp')) || 0;
+            bVal = parseFloat(b.cells[colIndex].getAttribute('data-timestamp')) || 0;
+          } else {
+            aVal = a.cells[colIndex].innerText.toLowerCase();
+            bVal = b.cells[colIndex].innerText.toLowerCase();
+          }
+
+          if (aVal < bVal) return -1 * currentSort.dir;
+          if (aVal > bVal) return 1 * currentSort.dir;
+          return 0;
+        });
+
+        currentSort.dir = (currentSort.col === colIndex) ? -currentSort.dir : 1;
+        currentSort.col = colIndex;
+
+        table.innerHTML = '';
+        rows.forEach(row => table.appendChild(row));
+
+        // Réinitialise les indicateurs
+        for (let i = 1; i <= 4; i++) {
+          document.getElementById(`sort-indicator-${i}`).textContent = '';
+        }
+
+        document.getElementById(`sort-indicator-${colIndex}`).textContent =
+          currentSort.dir === 1 ? '▲' : '▼';
+      }
+    </script>
+  </body>
+</html>
