@@ -6,6 +6,7 @@ __pycache__/
 *.pyc
 
 # Environnements virtuels
+.env
 venv/
 env/
 .venv/
@@ -28,6 +29,7 @@ instance/
 
 # Uploads / backups
 uploads/
+mocks/
 backup.zip
 
 # VS Code / IDE

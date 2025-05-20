@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify, send_from_directory, send_file, render_template, redirect, url_for, session
 from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
-import os, shutil, zipfile, uuid, datetime
+import os, shutil, zipfile, uuid, datetime, json
 
 # Load .env config
 load_dotenv()
@@ -15,8 +15,10 @@ app.secret_key = os.getenv("SECRET_KEY", "supersecret")
 # === Configuration ===
 UPLOAD_FOLDER = 'uploads'
 ICON_FOLDER = 'static/icons'
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+MOCK_FILE = 'mocks/mocks.json'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+os.makedirs('mocks', exist_ok=True)
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # === Icon Mapping ===
 EXT_ICON_MAP = {
@@ -37,6 +39,17 @@ def get_icon_for_file(filename):
 
 def get_file_type(filename):
     return filename.rsplit('.', 1)[-1].lower() if '.' in filename else 'inconnu'
+
+def load_mocks():
+    if not os.path.exists(MOCK_FILE):
+        with open(MOCK_FILE, 'w') as f:
+            json.dump({}, f)
+    with open(MOCK_FILE, 'r') as f:
+        return json.load(f)
+
+def save_mocks(mocks):
+    with open(MOCK_FILE, 'w') as f:
+        json.dump(mocks, f, indent=2)
 
 # === Auth Decorators ===
 def token_required(f):
@@ -94,6 +107,73 @@ def dashboard():
             'timestamp': uploaded_ts
         })
     return render_template('dashboard.html', files=file_infos, api_token=API_TOKEN)
+
+@app.route('/mocks')
+@login_required
+def mock_editor():
+    return render_template('mocks.html')
+
+# === Mock API Logic ===
+@app.route('/api/mock/<path:subpath>', methods=['GET', 'POST'])
+def serve_mock(subpath):
+    full_path = f"/api/mock/{subpath}"
+    mocks = load_mocks()
+    if full_path in mocks and request.method == mocks[full_path].get("method", "GET"):
+        return jsonify(mocks[full_path].get("response", {}))
+    return jsonify({"error": "NOT FOUND"}), 400
+
+@app.route('/api/admin/mock', methods=['POST'])
+@token_required
+def create_mock():
+    return create_mock_core()
+
+@app.route('/admin/mock', methods=['POST'])
+@login_required
+def create_mock_session():
+    return create_mock_core()
+
+@app.route('/api/admin/mock/<path:subpath>', methods=['DELETE'])
+@token_required
+def delete_mock(subpath):
+    return delete_mock_core(subpath)
+
+@app.route('/admin/mock/<path:subpath>', methods=['DELETE'])
+@login_required
+def delete_mock_session(subpath):
+    return delete_mock_core(subpath)
+
+@app.route('/admin/mocks.json')
+@login_required
+def get_mocks_json():
+    return jsonify(load_mocks())
+
+
+def create_mock_core():
+    data = request.json
+    path = data.get('path')
+    method = data.get('method', 'GET').upper()
+    response = data.get('response')
+
+    if not path or not response:
+        return jsonify({"error": "Path and response are required"}), 400
+
+    if not path.startswith("/api/mock/"):
+        return jsonify({"error": "Path must start with /api/mock/"}), 400
+
+    mocks = load_mocks()
+    mocks[path] = {"method": method, "response": response}
+    save_mocks(mocks)
+    return jsonify({"message": "Mock added", "path": path})
+
+def delete_mock_core(subpath):
+    full_path = f"/api/mock/{subpath}"
+    mocks = load_mocks()
+    if full_path in mocks:
+        del mocks[full_path]
+        save_mocks(mocks)
+        return jsonify({"message": "Mock deleted"})
+    return jsonify({"error": "Mock not found"}), 404
+    
 
 # === API Routes ===
 @app.route('/api/upload', methods=['POST'])

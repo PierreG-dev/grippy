@@ -4,93 +4,59 @@
     <meta charset="UTF-8" />
     <title>Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/@heroicons/vue@2.0.13/24/solid/index.min.js"></script>
   </head>
-  <body class="bg-gray-900 text-white min-h-screen relative">
-    <div class="max-w-4xl mx-auto p-6">
-      <div class="flex justify-between items-center mb-6">
-        <h1 class="text-2xl font-bold">📁 Dashboard – Fichiers uploadés</h1>
+  <body class="bg-gray-900 text-white min-h-screen">
+    <!-- Navbar -->
+    <nav
+      class="bg-gray-800 border-b border-gray-700 px-6 py-4 flex justify-between items-center shadow"
+    >
+      <div class="flex gap-4 items-center">
+        <a href="/" class="text-white hover:text-blue-400 font-semibold"
+          >🏠 Dashboard</a
+        >
+        <a href="/mocks" class="text-white hover:text-blue-400 font-semibold"
+          >🧪 Mocks</a
+        >
+      </div>
+      <div>
         <a
           href="/logout"
-          class="text-blue-400 hover:underline flex items-center gap-1"
+          class="text-sm text-gray-300 hover:text-red-400 transition"
+          >Déconnexion</a
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-5 w-5"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1m0-10v1"
-            />
-          </svg>
-          Déconnexion
-        </a>
       </div>
+    </nav>
 
-      <div class="mb-4 flex gap-4">
-        <button
-          id="openUpload"
-          class="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-        >
-          <img src="/static/icons/upload.png" alt="upload" class="w-5 h-5" />
-          Uploader
-        </button>
-
-        <button
-          id="downloadZip"
-          class="flex items-center gap-2 bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-5 w-5"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
+    <main class="max-w-5xl mx-auto p-6">
+      <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold">📁 Dashboard – Fichiers uploadés</h1>
+        <div class="flex gap-4">
+          <button
+            id="openUpload"
+            class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded text-white"
           >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M4 4v16h16V4H4zm8 4v8m0 0l-3-3m3 3l3-3"
-            />
-          </svg>
-          Télécharger tout
-        </button>
+            Uploader un fichier
+          </button>
+          <button
+            id="downloadZip"
+            class="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded text-white"
+          >
+            Télécharger tout (.zip)
+          </button>
+        </div>
       </div>
 
       <table class="w-full bg-gray-800 rounded shadow overflow-hidden">
         <thead class="bg-gray-700 text-left">
           <tr>
             <th class="p-3"></th>
-            <th class="p-3 cursor-pointer" onclick="sortTable(1, 'text')">
-              <div class="flex items-center gap-1">
-                Nom <span id="sort-indicator-1"></span>
-              </div>
-            </th>
-            <th class="p-3 cursor-pointer" onclick="sortTable(2, 'number')">
-              <div class="flex items-center gap-1">
-                Taille <span id="sort-indicator-2"></span>
-              </div>
-            </th>
-            <th class="p-3 cursor-pointer" onclick="sortTable(3, 'text')">
-              <div class="flex items-center gap-1">
-                Type <span id="sort-indicator-3"></span>
-              </div>
-            </th>
-            <th class="p-3 cursor-pointer" onclick="sortTable(4, 'date')">
-              <div class="flex items-center gap-1">
-                Uploadé <span id="sort-indicator-4"></span>
-              </div>
-            </th>
+            <th class="p-3">Nom</th>
+            <th class="p-3">Taille</th>
+            <th class="p-3">Type</th>
+            <th class="p-3">Uploadé</th>
             <th class="p-3">Actions</th>
           </tr>
         </thead>
-
         <tbody>
           {% for f in files %}
           <tr
@@ -128,14 +94,14 @@
           {% endfor %}
         </tbody>
       </table>
-    </div>
+    </main>
 
     <!-- Modale Upload -->
     <div
       id="uploadModal"
       class="fixed inset-0 bg-black bg-opacity-60 hidden flex items-center justify-center z-50"
     >
-      <div class="bg-gray-800 text-white p-6 rounded shadow-md w-full max-w-sm">
+      <div class="bg-gray-800 text-white p-6 rounded shadow-md w-full max-w-md">
         <h2 class="text-lg font-semibold mb-4">Uploader un fichier</h2>
         <div
           id="dropZone"
@@ -162,141 +128,96 @@
     ></div>
 
     <script>
-                              const token = {{ api_token | tojson | safe }};
+      const token = {{ api_token | tojson | safe }};
 
-                              const showToast = (message) => {
-                                const toast = document.getElementById('toast');
-                                toast.textContent = message;
-                                toast.classList.remove('hidden');
-                                setTimeout(() => toast.classList.add('hidden'), 3000);
-                              };
-
-                              const toggleModal = () => {
-                                document.getElementById('uploadModal').classList.toggle('hidden');
-                              };
-
-                              const deleteFile = (name) => {
-                                const encoded = encodeURIComponent(name);
-                                fetch(`/api/delete/${encoded}`, {
-                                  method: 'DELETE',
-                                  headers: { Authorization: 'Bearer ' + token }
-                                })
-                                  .then(res => res.json())
-                                  .then(() => {
-                                    showToast('Fichier supprimé');
-                                    setTimeout(() => location.reload(), 1000);
-                                  });
-                              };
-
-                              const copyLink = (url) => {
-                          navigator.clipboard.writeText(url)
-                            .then(() => showToast('Lien copié !'))
-                            .catch(() => showToast('Erreur lors de la copie'));
-                        };
-
-
-                              const uploadFile = (file) => {
-                                const formData = new FormData();
-                                formData.append('file', file);
-
-                                fetch('/api/upload', {
-                                  method: 'POST',
-                                  headers: { Authorization: 'Bearer ' + token },
-                                  body: formData
-                                })
-                                  .then(res => res.json())
-                                  .then(res => {
-                                    if (res.url) {
-                                      showToast('Fichier envoyé');
-                                      toggleModal();
-                                      setTimeout(() => location.reload(), 1000);
-                                    }
-                                  });
-                              };
-
-                              const downloadZip = () => {
-                                fetch('/api/backup', {
-                                  method: 'GET',
-                                  headers: { Authorization: 'Bearer ' + token }
-                                })
-                                  .then(res => res.blob())
-                                  .then(blob => {
-                                    const link = document.createElement('a');
-                                    link.href = window.URL.createObjectURL(blob);
-                                    link.download = 'backup.zip';
-                                    link.click();
-                                  });
-                              };
-
-                              const dropZone = document.getElementById('dropZone');
-                              const fileInput = document.getElementById('fileInput');
-
-                              dropZone.addEventListener('click', () => fileInput.click());
-
-                              dropZone.addEventListener('dragover', (e) => {
-                                e.preventDefault();
-                                dropZone.classList.add('border-blue-400');
-                              });
-
-                              dropZone.addEventListener('dragleave', () => {
-                                dropZone.classList.remove('border-blue-400');
-                              });
-
-                              dropZone.addEventListener('drop', (e) => {
-                                e.preventDefault();
-                                dropZone.classList.remove('border-blue-400');
-                                const files = e.dataTransfer.files;
-                                if (files.length > 0) uploadFile(files[0]);
-                              });
-
-                              fileInput.addEventListener('change', () => {
-                                if (fileInput.files.length > 0) uploadFile(fileInput.files[0]);
-                              });
-
-                              document.getElementById('openUpload').onclick = toggleModal;
-                              document.getElementById('cancelUpload').onclick = toggleModal;
-                              document.getElementById('downloadZip').onclick = downloadZip;
-
-                             // Tri dynamique avec flèches ▲▼
-      let currentSort = { col: null, dir: 1 };
-
-      function sortTable(colIndex, type) {
-        const table = document.querySelector("table tbody");
-        const rows = Array.from(table.rows);
-
-        rows.sort((a, b) => {
-          let aVal, bVal;
-
-          if (type === 'number') {
-            aVal = parseFloat(a.cells[colIndex].innerText.replace(',', '.')) || 0;
-            bVal = parseFloat(b.cells[colIndex].innerText.replace(',', '.')) || 0;
-          } else if (type === 'date') {
-            aVal = parseFloat(a.cells[colIndex].getAttribute('data-timestamp')) || 0;
-            bVal = parseFloat(b.cells[colIndex].getAttribute('data-timestamp')) || 0;
-          } else {
-            aVal = a.cells[colIndex].innerText.toLowerCase();
-            bVal = b.cells[colIndex].innerText.toLowerCase();
-          }
-
-          if (aVal < bVal) return -1 * currentSort.dir;
-          if (aVal > bVal) return 1 * currentSort.dir;
-          return 0;
-        });
-
-        currentSort.dir = (currentSort.col === colIndex) ? -currentSort.dir : 1;
-        currentSort.col = colIndex;
-
-        table.innerHTML = '';
-        rows.forEach(row => table.appendChild(row));
-
-        // Réinitialise les indicateurs
-        for (let i = 1; i <= 4; i++) {
-          document.getElementById(`sort-indicator-${i}`).textContent = '';
-        }
-
-        document.getElementById(`sort-indicator-${colIndex}`).textContent =
-          currentSort.dir === 1 ? '▲' : '▼';
+      function showToast(message) {
+        const toast = document.getElementById("toast");
+        toast.textContent = message;
+        toast.classList.remove("hidden");
+        setTimeout(() => toast.classList.add("hidden"), 3000);
       }
+
+      function toggleModal() {
+        document.getElementById("uploadModal").classList.toggle("hidden");
+      }
+
+      function deleteFile(name) {
+        const encoded = encodeURIComponent(name);
+        fetch(`/api/delete/${encoded}`, {
+          method: "DELETE",
+          headers: { Authorization: "Bearer " + token },
+        })
+          .then((res) => res.json())
+          .then(() => {
+            showToast("Fichier supprimé");
+            setTimeout(() => location.reload(), 1000);
+          });
+      }
+
+      function copyLink(url) {
+        navigator.clipboard.writeText(url)
+          .then(() => showToast("Lien copié !"))
+          .catch(() => showToast("Erreur lors de la copie"));
+      }
+
+      function uploadFile(file) {
+        const formData = new FormData();
+        formData.append("file", file);
+
+        fetch("/api/upload", {
+          method: "POST",
+          headers: { Authorization: "Bearer " + token },
+          body: formData,
+        })
+          .then((res) => res.json())
+          .then((res) => {
+            if (res.url) {
+              showToast("Fichier envoyé");
+              toggleModal();
+              setTimeout(() => location.reload(), 1000);
+            }
+          });
+      }
+
+      function downloadZip() {
+        fetch("/api/backup", {
+          method: "GET",
+          headers: { Authorization: "Bearer " + token },
+        })
+          .then((res) => res.blob())
+          .then((blob) => {
+            const link = document.createElement("a");
+            link.href = window.URL.createObjectURL(blob);
+            link.download = "backup.zip";
+            link.click();
+          });
+      }
+
+      const dropZone = document.getElementById("dropZone");
+      const fileInput = document.getElementById("fileInput");
+
+      dropZone.addEventListener("click", () => fileInput.click());
+      dropZone.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        dropZone.classList.add("border-blue-400");
+      });
+      dropZone.addEventListener("dragleave", () => {
+        dropZone.classList.remove("border-blue-400");
+      });
+      dropZone.addEventListener("drop", (e) => {
+        e.preventDefault();
+        dropZone.classList.remove("border-blue-400");
+        const files = e.dataTransfer.files;
+        if (files.length > 0) uploadFile(files[0]);
+      });
+
+      fileInput.addEventListener("change", () => {
+        if (fileInput.files.length > 0) uploadFile(fileInput.files[0]);
+      });
+
+      document.getElementById("openUpload").onclick = toggleModal;
+      document.getElementById("cancelUpload").onclick = toggleModal;
+      document.getElementById("downloadZip").onclick = downloadZip;
     </script>
   </body>
 </html>
