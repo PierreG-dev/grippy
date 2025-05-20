@@ -9,7 +9,9 @@ API_TOKEN = os.getenv("API_TOKEN", "changeme")
 ADMIN_USER = os.getenv("ADMIN_USER", "admin")
 ADMIN_PASS = os.getenv("ADMIN_PASS", "password")
 
-app = Flask(__name__)
+application = Flask(__name__)
+app = application  
+
 app.secret_key = os.getenv("SECRET_KEY", "supersecret")
 
 # === Configuration ===
