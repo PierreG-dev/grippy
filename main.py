@@ -235,9 +235,10 @@ def backup():
 # === Public file access ===
 @app.route('/files/<filename>')
 def serve_file(filename):
-    response = send_from_directory(app.config['UPLOAD_FOLDER'], filename, as_attachment=False)
-    # Supprimer complètement l’en-tête Content-Disposition
-    response.headers.pop("Content-Disposition", None)
+    response = send_file(
+        os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    )
+    response.headers["Content-Disposition"] = "attachment"
     return response
 
 # === Run ===
