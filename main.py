@@ -235,7 +235,10 @@ def backup():
 # === Public file access ===
 @app.route('/files/<filename>')
 def serve_file(filename):
-    return send_from_directory(app.config['UPLOAD_FOLDER'], filename, as_attachment=False)
+    response = send_from_directory(app.config['UPLOAD_FOLDER'], filename, as_attachment=False)
+    # Supprimer complètement l’en-tête Content-Disposition
+    response.headers.pop("Content-Disposition", None)
+    return response
 
 # === Run ===
 if __name__ == '__main__':
