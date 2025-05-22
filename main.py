@@ -233,13 +233,22 @@ def backup():
     return send_file(zip_path, as_attachment=True)
 
 # === Public file access ===
+ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "https://learn.pierre-godino.com",
+]
+
 @app.route('/files/<filename>')
 def serve_file(filename):
-    response = send_file(
-        os.path.join(app.config['UPLOAD_FOLDER'], filename)
-    )
+    origin = request.headers.get("Origin", "")
+    response = send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
+    if origin in ALLOWED_ORIGINS:
+        response.headers["Access-Control-Allow-Origin"] = origin
+        response.headers["Access-Control-Expose-Headers"] = "Content-Disposition"
+
     response.headers["Content-Disposition"] = "attachment"
-    return response
 
 # === Run ===
 if __name__ == '__main__':
