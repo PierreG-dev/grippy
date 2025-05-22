@@ -242,15 +242,12 @@ ALLOWED_ORIGINS = [
 
 @app.route('/files/<filename>')
 def serve_file(filename):
-    origin = request.headers.get("Origin", "")
     response = send_from_directory(app.config['UPLOAD_FOLDER'], filename)
-
-    if origin in ALLOWED_ORIGINS:
-        response.headers["Access-Control-Allow-Origin"] = origin
-        response.headers["Access-Control-Expose-Headers"] = "Content-Disposition"
-
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Expose-Headers"] = "Content-Disposition"
     response.headers["Content-Disposition"] = "attachment"
     return response
+
 
 # === Run ===
 if __name__ == '__main__':
