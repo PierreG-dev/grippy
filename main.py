@@ -249,6 +249,7 @@ def serve_file(filename):
         response.headers["Access-Control-Expose-Headers"] = "Content-Disposition"
 
     response.headers["Content-Disposition"] = "attachment"
+    return response
 
 # === Run ===
 if __name__ == '__main__':
