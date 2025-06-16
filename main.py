@@ -116,13 +116,33 @@ def mock_editor():
     return render_template('mocks.html')
 
 # === Mock API Logic ===
+@app.route("/api/mock/<path:subpath>", methods=["OPTIONS"])
+def mock_cors_preflight(subpath):
+    response = make_response()
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+    return response
+
+from flask import make_response, jsonify, request
+
 @app.route('/api/mock/<path:subpath>', methods=['GET', 'POST'])
 def serve_mock(subpath):
     full_path = f"/api/mock/{subpath}"
     mocks = load_mocks()
+
     if full_path in mocks and request.method == mocks[full_path].get("method", "GET"):
-        return jsonify(mocks[full_path].get("response", {}))
-    return jsonify({"error": "NOT FOUND"}), 400
+        response = make_response(jsonify(mocks[full_path].get("response", {})))
+    else:
+        response = make_response(jsonify({"error": "NOT FOUND"}), 400)
+
+    # CORS headers : autoriser tout le monde
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+
+    return response
+
 
 @app.route('/api/admin/mock', methods=['POST'])
 @token_required
