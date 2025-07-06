@@ -58,7 +58,7 @@ def token_required(f):
     def wrapper(*args, **kwargs):
         auth = request.headers.get('Authorization', '')
         if auth != f'Bearer {API_TOKEN}':
-            return jsonify({'error': 'Unauthorized', "faulty_token": auth, "should_be" : f'Bearer {API_TOKEN}' }), 401
+            return jsonify({'error': 'Unauthorized'}), 401
         return f(*args, **kwargs)
     wrapper.__name__ = f.__name__
     return wrapper
