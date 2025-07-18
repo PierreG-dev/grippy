@@ -50,10 +50,41 @@
         <thead class="bg-gray-700 text-left">
           <tr>
             <th class="p-3"></th>
-            <th class="p-3">Nom</th>
-            <th class="p-3">Taille</th>
-            <th class="p-3">Type</th>
-            <th class="p-3">Uploadé</th>
+            <th class="p-3">
+              <a
+                href="/?sort=name&order={{ 'asc' if current_sort != 'name' or current_order == 'desc' else 'desc' }}"
+              >
+                Nom {% if current_sort == 'name' %}{{ '🔽' if current_order ==
+                'desc' else '🔼' }}{% endif %}
+              </a>
+            </th>
+
+            <th class="p-3">
+              <a
+                href="/?sort=size&order={{ 'asc' if current_sort != 'size' or current_order == 'desc' else 'desc' }}"
+              >
+                Taille {% if current_sort == 'size' %}{{ '🔽' if current_order
+                == 'desc' else '🔼' }}{% endif %}
+              </a>
+            </th>
+            <th class="p-3">
+              <a
+                href="/?sort=type&order={{ 'asc' if current_sort != 'type' or current_order == 'desc' else 'desc' }}"
+              >
+                Type {% if current_sort == 'type' %}{{ '🔽' if current_order ==
+                'desc' else '🔼' }}{% endif %}
+              </a>
+            </th>
+
+            <th class="p-3">
+              <a
+                href="/?sort=date&order={{ 'asc' if current_sort != 'date' or current_order == 'desc' else 'desc' }}"
+              >
+                Uploadé {% if current_sort == 'date' %}{{ '🔽' if current_order
+                == 'desc' else '🔼' }}{% endif %}
+              </a>
+            </th>
+
             <th class="p-3">Actions</th>
           </tr>
         </thead>
@@ -62,15 +93,21 @@
           <tr
             class="{% if loop.index is even %}bg-gray-700{% else %}bg-gray-800{% endif %} border-t border-gray-600"
           >
-            <td class="p-3 w-10">
+            <td class="p-3 w-15">
               <img
                 src="{{ f.icon }}"
                 alt="icon"
-                class="w-6 h-6"
-                style="object-fit: cover"
+                class="w-8 h-8 object-contain"
+                style="object-fit: contain"
               />
             </td>
-            <td class="p-3">{{ f.name }}</td>
+            <td class="p-3">
+              {{ f.name }}<br />
+              <span class="text-sm text-gray-400 italic"
+                >{{ f.original_name }}</span
+              >
+            </td>
+
             <td class="p-3">{{ (f.size / 1024)|round(1) }} Ko</td>
             <td class="p-3">{{ f.type }}</td>
             <td class="p-3" data-timestamp="{{ f.timestamp }}">

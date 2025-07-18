@@ -14,6 +14,19 @@ app = application
 
 app.secret_key = os.getenv("SECRET_KEY", "supersecret")
 
+METADATA_FILE = 'uploads/metadata.json'
+
+def load_metadata():
+    if not os.path.exists(METADATA_FILE):
+        return {}
+    with open(METADATA_FILE, 'r') as f:
+        return json.load(f)
+
+def save_metadata(data):
+    with open(METADATA_FILE, 'w') as f:
+        json.dump(data, f, indent=2)
+
+
 # === Configuration ===
 UPLOAD_FOLDER = 'uploads'
 ICON_FOLDER = 'static/icons'
@@ -25,7 +38,7 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 # === Icon Mapping ===
 EXT_ICON_MAP = {
     'pdf': 'pdf.png',
-    'zip': 'winrar.png', 'rar': 'winrar.png', '7z': 'winrar.png',
+    'zip': 'zip.png', 'rar': 'zip.png', '7z': 'zip.png',
     'jpg': 'image.png', 'jpeg': 'image.png', 'png': 'image.png', 'gif': 'image.png', 'webp': 'image.png', 'svg': 'image.png',
     'mp3': 'audio.png', 'wav': 'audio.png', 'ogg': 'audio.png', 'flac': 'audio.png',
     'mp4': 'video.png', 'webm': 'video.png', 'mkv': 'video.png', 'mov': 'video.png', 'avi': 'video.png',
@@ -92,15 +105,23 @@ def logout():
 @app.route('/')
 @login_required
 def dashboard():
+    sort_key = request.args.get('sort', 'date')
+    reverse = request.args.get('order', 'desc') == 'desc'
+
+    metadata = load_metadata()
+
     files = os.listdir(app.config['UPLOAD_FOLDER'])
     file_infos = []
     for fname in files:
+        if fname == 'metadata.json':
+            continue  # ignorer le fichier de métadonnées
         path = os.path.join(app.config['UPLOAD_FOLDER'], fname)
         icon_path = get_icon_for_file(fname)
         uploaded_ts = os.path.getmtime(path)
         uploaded_str = datetime.datetime.fromtimestamp(uploaded_ts).strftime('%d/%m/%Y %H:%M')
         file_infos.append({
             'name': fname,
+            'original_name': metadata.get(fname, {}).get('original_name', fname),
             'size': os.path.getsize(path),
             'url': url_for('serve_file', filename=fname),
             'icon': icon_path,
@@ -108,7 +129,17 @@ def dashboard():
             'uploaded': uploaded_str,
             'timestamp': uploaded_ts
         })
-    return render_template('dashboard.html', files=file_infos, api_token=API_TOKEN)
+
+    if sort_key == 'name':
+        file_infos.sort(key=lambda f: f['name'].lower(), reverse=reverse)
+    elif sort_key == 'size':
+        file_infos.sort(key=lambda f: f['size'], reverse=reverse)
+    elif sort_key == 'type':
+        file_infos.sort(key=lambda f: f['type'].lower(), reverse=reverse)
+    else:
+        file_infos.sort(key=lambda f: f['timestamp'], reverse=reverse)
+
+    return render_template('dashboard.html', files=file_infos, api_token=API_TOKEN, current_sort=sort_key, current_order='desc' if reverse else 'asc')
 
 @app.route('/mocks')
 @login_required
@@ -213,6 +244,11 @@ def upload_file():
     new_filename = f"{unique_id}{ext}"
     save_path = os.path.join(app.config['UPLOAD_FOLDER'], new_filename)
     file.save(save_path)
+
+    # === Enregistrer le nom original dans metadata.json
+    metadata = load_metadata()
+    metadata[new_filename] = {"original_name": original_filename}
+    save_metadata(metadata)
 
     file_url = request.host_url.rstrip('/') + url_for('serve_file', filename=new_filename)
     return jsonify({'message': 'File uploaded successfully', 'url': file_url, 'id': unique_id, 'filename': new_filename})
